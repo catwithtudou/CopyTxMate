@@ -12,6 +12,7 @@ struct pdf_paste_toolApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()
+                .frame(minWidth: 550, minHeight: 280)
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)

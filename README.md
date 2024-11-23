@@ -48,7 +48,7 @@
 
 ## 安装说明
 
-1. 下载 文本格式化工具.dmg
+1. 下载 CopyTxMate.dmg
 2. 双击打开 DMG 文件
 3. 将应用程序拖拽到 Applications 文件夹
 4. 在 Applications 文件夹中双击运行应用
