@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+    <!-- 背景 -->
+    <rect x="0" y="0" width="1024" height="1024" rx="224" fill="#007AFF" />
+
+    <!-- 文档主体 -->
+    <rect x="256" y="192" width="512" height="640" rx="48" fill="white" />
+
+    <!-- 格式化符号 -->
+    <g fill="#007AFF">
+        <!-- 上方文本线 -->
+        <rect x="320" y="288" width="320" height="24" rx="12" />
+        <rect x="320" y="352" width="240" height="24" rx="12" />
+
+        <!-- 中间分隔符 -->
+        <rect x="320" y="416" width="384" height="4" rx="2" opacity="0.3" />
+
+        <!-- 下方对齐文本 -->
+        <rect x="320" y="456" width="384" height="24" rx="12" />
+        <rect x="320" y="520" width="280" height="24" rx="12" />
+        <rect x="320" y="584" width="384" height="24" rx="12" />
+
+        <!-- 格式化标记 -->
+        <circle cx="320" cy="680" r="8" />
+        <circle cx="352" cy="680" r="8" />
+        <circle cx="384" cy="680" r="8" />
+    </g>
+
+    <!-- 右上角格式化箭头 -->
+    <path d="M704 288l-32 32 32 32" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>
