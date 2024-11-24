@@ -74,15 +74,35 @@ class TextFormattingService {
 
         var result = ""
         var previousChar: Character? = nil
+        var isInChineseParentheses = false
+        var isInEnglishParentheses = false
 
         for char in text {
-            if let mappedChar = punctuationMap[char] {
-                // 检查前一个字符是否为中文
+            if char == "（" || char == "(" {
+                // 根据上下文决定使用哪种括号
                 let shouldUseChinesePunctuation = isChineseChar(previousChar)
+                isInChineseParentheses = shouldUseChinesePunctuation
+                isInEnglishParentheses = !shouldUseChinesePunctuation
+                result.append(shouldUseChinesePunctuation ? "（" : "(")
+            } else if char == "）" || char == ")" {
+                // 使用与开始括号匹配的结束括号
+                if isInChineseParentheses {
+                    result.append("）")
+                    isInChineseParentheses = false
+                } else if isInEnglishParentheses {
+                    result.append(")")
+                    isInEnglishParentheses = false
+                } else {
+                    // 如果没有匹配的开始括号，根据上下文决定
+                    result.append(isChineseChar(previousChar) ? "）" : ")")
+                }
+            } else if let mappedChar = punctuationMap[char] {
+                // 如果在括号内，使用对应的标点类型
+                let shouldUseChinesePunctuation = isInChineseParentheses || (!isInEnglishParentheses && isChineseChar(previousChar))
                 result.append(shouldUseChinesePunctuation ? mappedChar : char)
             } else if let originalChar = punctuationMap.first(where: { $0.value == char })?.key {
-                // 检查前一个字符是否为英文
-                let shouldUseEnglishPunctuation = !isChineseChar(previousChar)
+                // 如果在括号内，使用对应的标点类型
+                let shouldUseEnglishPunctuation = isInEnglishParentheses || (!isInChineseParentheses && !isChineseChar(previousChar))
                 result.append(shouldUseEnglishPunctuation ? originalChar : char)
             } else {
                 result.append(char)

@@ -126,7 +126,7 @@ struct MainView: View {
                             clipboardManager.isAutoPasteEnabled.toggle()
                             showToast(message: clipboardManager.isAutoPasteEnabled ?
                                 "已开启自动格式化功能，复制文本将自动处理" :
-                                "已关闭自动格式化功能，需手���处理文本")
+                                "已关闭自动格式化功能，需手动处理文本")
                             NSSound.beep()  // 添加音效反馈
                         }
                         .keyboardShortcut("a", modifiers: .command)

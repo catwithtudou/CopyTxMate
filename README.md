@@ -92,14 +92,14 @@
 ## 项目结构
 
 ```plaintext
-pdf_paste_tool/
+CopyTxMate/
 ├── Views/
 │ └── MainView.swift # 主界面视图
 ├── Models/
 │ └── ClipboardManager.swift # 剪贴板管理
 ├── Services/
 │ └── TextFormattingService.swift # 文本格式化服务
-└── pdf_paste_toolApp.swift # 应用入口
+└── CopyTxMateApp.swift # 应用入口
 ```
 
 ## 开发环境
