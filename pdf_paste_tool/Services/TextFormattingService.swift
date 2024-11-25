@@ -36,23 +36,42 @@ class TextFormattingService {
     private func removeExtraSpaces(_ text: String) -> String {
         var result = text
 
-        // 移除连续的空格
+        // 1. 处理换行和多余空格
+        result = result.replacingOccurrences(
+            of: "\\s*\\n\\s*",
+            with: "",
+            options: .regularExpression
+        )
+
+        // 2. 处理连续的空格
         result = result.replacingOccurrences(
             of: "\\s+",
             with: " ",
             options: .regularExpression
         )
 
-        // 移除标点符号前后的空格
-        let punctuationMarks = ["，", "。", "！", "？", "：", "；", ",", ".", "!", "?", ":", ";",
-                               "（", "）", "(", ")", "【", "】", "[", "]"]
+        // 3. 移除标点符号前后的空格
+        let punctuationMarks = "，。！？：；,.!?:;（）()【】[]"
         for mark in punctuationMarks {
             result = result.replacingOccurrences(
-                of: "\\s*\(NSRegularExpression.escapedPattern(for: mark))\\s*",
-                with: mark,
+                of: "\\s*\(NSRegularExpression.escapedPattern(for: String(mark)))\\s*",
+                with: String(mark),
                 options: .regularExpression
             )
         }
+
+        // 4. 处理中英文之间的空格
+        result = result.replacingOccurrences(
+            of: "([\\p{Han}])\\s+([a-zA-Z0-9])",
+            with: "$1 $2",
+            options: .regularExpression
+        )
+
+        result = result.replacingOccurrences(
+            of: "([a-zA-Z0-9])\\s+([\\p{Han}])",
+            with: "$1 $2",
+            options: .regularExpression
+        )
 
         return result.trimmingCharacters(in: .whitespaces)
     }
