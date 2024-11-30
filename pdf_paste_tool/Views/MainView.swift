@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 struct MainView: View {
-    @StateObject private var clipboardManager = ClipboardManager()
+    @EnvironmentObject private var clipboardManager: ClipboardManager
     @State private var testResults: String = ""
     @State private var isShowingTestResults: Bool = false
     @State private var showToast: Bool = false
