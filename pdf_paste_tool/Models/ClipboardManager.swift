@@ -13,6 +13,7 @@ class ClipboardManager: ObservableObject {
     private var timer: Timer?
     private var isProcessingTest = false
     private var lastProcessedText: String?
+    private var lastChangeCount: Int = 0
     let formattingService = TextFormattingService()
 
     private let pasteboard: NSPasteboard = {
@@ -23,17 +24,24 @@ class ClipboardManager: ObservableObject {
 
     init() {
         isAutoPasteEnabled = UserDefaults.standard.bool(forKey: "isAutoPasteEnabled")
+        lastChangeCount = pasteboard.changeCount
         startMonitoring()
     }
 
     private func startMonitoring() {
+        stopMonitoring()
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             self?.checkClipboard()
         }
+        RunLoop.main.add(timer!, forMode: .common)
     }
 
     private func checkClipboard() {
         guard !isProcessingTest else { return }
+
+        let currentChangeCount = pasteboard.changeCount
+        guard currentChangeCount != lastChangeCount else { return }
+        lastChangeCount = currentChangeCount
 
         guard let text = pasteboard.string(forType: .string) else { return }
         guard text != lastProcessedText else { return }
@@ -54,7 +62,10 @@ class ClipboardManager: ObservableObject {
 
     private func writeToClipboard(_ text: String) {
         pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
+        if pasteboard.setString(text, forType: .string) {
+            lastChangeCount = pasteboard.changeCount
+            lastProcessedText = text
+        }
     }
 
     func formatCurrentText() {
@@ -67,7 +78,6 @@ class ClipboardManager: ObservableObject {
     func copyToClipboard(_ text: String) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.lastProcessedText = text
             self.writeToClipboard(text)
         }
     }

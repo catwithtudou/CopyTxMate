@@ -1,11 +1,31 @@
 import Foundation
 
 class TextFormattingService {
-    // MARK: - Public Methods
+    // 缓存正则表达式以提高性能
+    private static let chinesePattern = "([\\p{Han}，。！？：；（）【】])"
+    private static let chineseSpacePattern = "\(chinesePattern)\\s+\(chinesePattern)"
 
-    /// 处理文本的主入口
-    /// - Parameter text: 原始文本
-    /// - Returns: 格式化后的文本
+    // 缓存标点符号映射
+    private static let punctuationMap: [Character: Character] = [
+        ",": "，",
+        ".": "。",
+        "!": "！",
+        "?": "？",
+        ":": "：",
+        ";": "；",
+        "(": "（",
+        ")": "）",
+        "[": "【",
+        "]": "】"
+    ]
+
+    // 缓存正则表达式模式
+    private static let mixedTextPatterns: [(pattern: String, replacement: String)] = [
+        ("([\\p{Han}，。！？：；（）【】])\\s*([a-zA-Z0-9])", "$1 $2"),
+        ("([a-zA-Z0-9])\\s*([\\p{Han}，。！？：；（）【】])", "$1 $2")
+    ]
+
+    /// 格式化文本的主入口
     func formatText(_ text: String) -> String {
         // 确保输入文本是有效的
         guard !text.isEmpty else { return "" }
@@ -18,40 +38,71 @@ class TextFormattingService {
 
         var result = validText
 
-        // 1. 处理多余的空格
-        result = removeExtraSpaces(result)
+        // 使用 autoreleasepool 来管理内存
+        autoreleasepool {
+            // 1. 处理多余的空格
+            result = removeExtraSpaces(result)
 
-        // 2. 处理标点符号
-        result = convertPunctuation(result)
+            // 2. 处理标点符号
+            result = convertPunctuation(result)
 
-        // 3. 处理中英文混排
-        result = formatMixedText(result)
+            // 3. 处理中英文混排
+            result = formatMixedText(result)
+        }
 
         return result
     }
 
-    // MARK: - Private Methods
-
-    /// 移除多余的空格
+    /// 处理多余的空格
     private func removeExtraSpaces(_ text: String) -> String {
         var result = text
 
-        // 1. 处理换行和多余空格
-        result = result.replacingOccurrences(
-            of: "\\s*\\n\\s*",
-            with: "",
-            options: .regularExpression
-        )
+        autoreleasepool {
+            // 1. 处理换行和多余空格
+            result = result.replacingOccurrences(
+                of: "\\s*\\n\\s*",
+                with: "",
+                options: .regularExpression
+            )
 
-        // 2. 处理连续的空格
-        result = result.replacingOccurrences(
-            of: "\\s+",
-            with: " ",
-            options: .regularExpression
-        )
+            // 2. 处理中文字符之间的空格
+            while result.range(of: Self.chineseSpacePattern, options: .regularExpression) != nil {
+                result = result.replacingOccurrences(
+                    of: Self.chineseSpacePattern,
+                    with: "$1$2",
+                    options: .regularExpression
+                )
+            }
 
-        // 3. 移除标点符号前后的空格
-        let punctuationMarks = "，。！？：；,.!?:;（）()【】[]"
+            // 3. 处理连续的空格
+            result = result.replacingOccurrences(
+                of: "\\s+",
+                with: " ",
+                options: .regularExpression
+            )
+
+            // 4. 处理中英文混排的空格
+            for (pattern, replacement) in Self.mixedTextPatterns {
+                result = result.replacingOccurrences(
+                    of: pattern,
+                    with: replacement,
+                    options: .regularExpression
+                )
+            }
+
+            // 5. 处理标点符号
+            result = processPunctuation(result)
+        }
+
+        return result.trimmingCharacters(in: .whitespaces)
+    }
+
+    /// 处理标点符号
+    private func processPunctuation(_ text: String) -> String {
+        var result = text
+
+        // 处理英文标点
+        let punctuationMarks = ",.!?:;"
         for mark in punctuationMarks {
             result = result.replacingOccurrences(
                 of: "\\s*\(NSRegularExpression.escapedPattern(for: String(mark)))\\s*",
@@ -60,37 +111,21 @@ class TextFormattingService {
             )
         }
 
-        // 4. 处理中英文之间的空格
-        result = result.replacingOccurrences(
-            of: "([\\p{Han}])\\s+([a-zA-Z0-9])",
-            with: "$1 $2",
-            options: .regularExpression
-        )
+        // 处理中文标点
+        let chinesePunctuationMarks = "，。！？：；（）【】"
+        for mark in chinesePunctuationMarks {
+            result = result.replacingOccurrences(
+                of: "\\s*\(NSRegularExpression.escapedPattern(for: String(mark)))\\s*",
+                with: String(mark),
+                options: .regularExpression
+            )
+        }
 
-        result = result.replacingOccurrences(
-            of: "([a-zA-Z0-9])\\s+([\\p{Han}])",
-            with: "$1 $2",
-            options: .regularExpression
-        )
-
-        return result.trimmingCharacters(in: .whitespaces)
+        return result
     }
 
     /// 转换标点符号
     private func convertPunctuation(_ text: String) -> String {
-        let punctuationMap: [Character: Character] = [
-            ",": "，",
-            ".": "。",
-            "!": "！",
-            "?": "？",
-            ":": "：",
-            ";": "；",
-            "(": "（",
-            ")": "）",
-            "[": "【",
-            "]": "】"
-        ]
-
         var result = ""
         var previousChar: Character? = nil
         var isInChineseParentheses = false
@@ -115,11 +150,11 @@ class TextFormattingService {
                     // 如果没有匹配的开始括号，根据上下文决定
                     result.append(isChineseChar(previousChar) ? "）" : ")")
                 }
-            } else if let mappedChar = punctuationMap[char] {
+            } else if let mappedChar = Self.punctuationMap[char] {
                 // 如果在括号内，使用对应的标点类型
                 let shouldUseChinesePunctuation = isInChineseParentheses || (!isInEnglishParentheses && isChineseChar(previousChar))
                 result.append(shouldUseChinesePunctuation ? mappedChar : char)
-            } else if let originalChar = punctuationMap.first(where: { $0.value == char })?.key {
+            } else if let originalChar = Self.punctuationMap.first(where: { $0.value == char })?.key {
                 // 如果在括号内，使用对应的标点类型
                 let shouldUseEnglishPunctuation = isInEnglishParentheses || (!isInChineseParentheses && !isChineseChar(previousChar))
                 result.append(shouldUseEnglishPunctuation ? originalChar : char)
